@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="Arboria Police Department Internal Terminal - The Abandoned Ones Official Page">
+    <title>APD Workstation OS // The Abandoned Ones</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --desktop-bg: #071324;
+            --win-gray: #c0c0c0;
+            --win-light: #ffffff;
+            --win-dark: #808080;
+            --win-black: #0a0a0a;
+            --win-navy: #000080;
+            --win-navy-light: #1034a6;
+            --win-inactive: #5a6675;
+            --apd-gold: #d49b00;
+            --crt-green: #00ff66;
+            --alert-red: #b31b1b;
+            --font-ui: 'Tahoma', 'Segoe UI', Geneva, Verdana, sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--desktop-bg);
+            background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0);
+            background-size: 24px 24px;
+            font-family: var(--font-ui);
+            color: var(--win-black);
+            padding-bottom: 64px;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Subtle CRT Scanlines */
+        .crt-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.18) 50%);
+            background-size: 100% 4px;
+            z-index: 9000;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        body.crt-off .crt-overlay { opacity: 0; }
+
+        /* Classic 90s Windows 3D Bevels */
+        .win-window {
+            background: var(--win-gray);
+            border-top: 2px solid var(--win-light);
+            border-left: 2px solid var(--win-light);
+            border-right: 2px solid var(--win-black);
+            border-bottom: 2px solid var(--win-black);
+            box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 var(--win-dark), 0 12px 30px rgba(0, 0, 0, 0.6);
+            margin-bottom: 28px;
+            scroll-margin-top: 20px;
+        }
+
+        .win-titlebar {
+            background: linear-gradient(90deg, var(--win-inactive), #7c8896);
+            color: #e6e6e6;
+            padding: 5px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.84rem;
+            letter-spacing: 0.4px;
+            user-select: none;
+            transition: background 0.2s ease;
+        }
+
+        .win-window.active-win .win-titlebar {
+            background: linear-gradient(90deg, var(--win-navy), var(--win-navy-light));
+            color: #ffffff;
+        }
+
+        .win-titlebar-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .win-titlebar-left img {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .win-controls {
+            display: flex;
+            gap: 3px;
+            flex-shrink: 0;
+        }
+
+        .win-ctrl-btn {
+            width: 18px;
+            height: 16px;
+            background: var(--win-gray);
+            border-top: 1px solid var(--win-light);
+            border-left: 1px solid var(--win-light);
+            border-right: 1px solid var(--win-black);
+            border-bottom: 1px solid var(--win-black);
+            color: var(--win-black);
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: default;
+        }
+
+        .win-body { padding: 18px; }
+
+        /* Recessed 90s Panels */
+        .win-inset {
+            background: #ffffff;
+            border-top: 2px solid var(--win-dark);
+            border-left: 2px solid var(--win-dark);
+            border-right: 2px solid var(--win-light);
+            border-bottom: 2px solid var(--win-light);
+            padding: 16px;
+        }
+
+        .win-inset-dark {
+            background: #080c11;
+            color: #d8e2ef;
+            border-top: 2px solid var(--win-black);
+            border-left: 2px solid var(--win-black);
+            border-right: 2px solid var(--win-light);
+            border-bottom: 2px solid var(--win-light);
+            padding: 16px;
+            font-family: var(--font-mono);
+        }
+
+        /* 90s Tactile Buttons */
+        .win-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: var(--win-gray);
+            color: var(--win-black);
+            font-family: var(--font-ui);
+            font-size: 0.85rem;
+            font-weight: bold;
+            padding: 8px 14px;
+            text-decoration: none;
+            border-top: 2px solid var(--win-light);
+            border-left: 2px solid var(--win-light);
+            border-right: 2px solid var(--win-black);
+            border-bottom: 2px solid var(--win-black);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.12s ease;
+        }
+
+        .win-btn:hover { background: #d4d4d4; }
+
+        .win-btn:active, .win-btn.active {
+            border-top: 2px solid var(--win-black);
+            border-left: 2px solid var(--win-black);
+            border-right: 2px solid var(--win-light);
+            border-bottom: 2px solid var(--win-light);
+            background: #b2b2b2;
+            transform: translate(1px, 1px);
+        }
+
+        .win-btn-primary {
+            background: var(--win-navy);
+            color: #ffffff;
+        }
+        .win-btn-primary:hover { background: #0000a8; }
+
+        /* Top Desktop Header */
+        .desktop-header {
+            max-width: 980px;
+            margin: 24px auto 18px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #fff;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .apd-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .apd-brand img {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 2px solid var(--apd-gold);
+            object-fit: cover;
+            background: #040d1a;
+        }
+
+        .apd-brand h1 {
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            letter-spacing: 0.8px;
+            color: #ffffff;
+        }
+
+        .apd-brand span {
+            font-family: var(--font-mono);
+            font-size: 0.76rem;
+            color: #9ab0c7;
+            display: block;
+        }
+
+        .top-nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Main Workspace Container */
+        .workspace {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        /* Hero / Case Brief Layout */
+        .brief-grid {
+            display: grid;
+            grid-template-columns: 1.3fr 0.7fr;
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .classified-tag {
+            display: inline-block;
+            background: var(--alert-red);
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: bold;
+            padding: 2px 8px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .game-title {
+            font-family: var(--font-mono);
+            font-size: 1.95rem;
+            font-weight: 700;
+            color: var(--win-navy);
+            margin-bottom: 10px;
+            line-height: 1.1;
+        }
+
+        .redacted {
+            background: var(--win-black);
+            color: var(--win-black);
+            padding: 0 4px;
+            user-select: none;
+        }
+
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+
+        .meta-table td {
+            padding: 6px 4px;
+            border-bottom: 1px dotted var(--win-dark);
+        }
+
+        .meta-table td:first-child {
+            font-weight: bold;
+            color: var(--win-navy);
+        }
+
+        /* Two Column Grid for CCTV & Wiki */
+        .dual-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 22px;
+        }
+
+        /* CCTV Monitor */
+        .cctv-screen {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            background: #05080c;
+            border-top: 2px solid var(--win-black);
+            border-left: 2px solid var(--win-black);
+            border-right: 2px solid var(--win-light);
+            border-bottom: 2px solid var(--win-light);
+            overflow: hidden;
+            margin-bottom: 12px;
+            cursor: zoom-in;
+        }
+
+        .cctv-screen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: contrast(1.12) grayscale(0.2);
+            transition: opacity 0.15s ease;
+        }
+
+        .cctv-overlay {
+            position: absolute;
+            inset: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--crt-green);
+            text-shadow: 1px 1px 2px #000;
+            pointer-events: none;
+        }
+
+        .cam-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        /* Wiki / Personnel Database */
+        .folder-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .bio-list {
+            list-style: none;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+            line-height: 1.65;
+        }
+
+        /* Development Grid */
+        .dev-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .dev-slot {
+            background: #0b111a;
+            border-top: 2px solid var(--win-dark);
+            border-left: 2px solid var(--win-dark);
+            border-right: 2px solid var(--win-light);
+            border-bottom: 2px solid var(--win-light);
+            aspect-ratio: 16 / 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: zoom-in;
+        }
+
+        .dev-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.2s ease;
+        }
+
+        .dev-slot:hover img { transform: scale(1.03); }
+
+        .dev-caption {
+            font-family: var(--font-mono);
+            font-size: 0.76rem;
+            margin-top: 6px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        /* Modal Image Viewer (Windows 95 Dialog) */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.78);
+            z-index: 8000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-backdrop.open { display: flex; }
+
+        .modal-window {
+            max-width: 780px;
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .modal-img-wrap {
+            background: #000;
+            max-height: 75vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .modal-img-wrap img {
+            max-width: 100%;
+            max-height: 72vh;
+            object-fit: contain;
+        }
+
+        /* Bottom Windows 95 Taskbar */
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 38px;
+            background: var(--win-gray);
+            border-top: 2px solid var(--win-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+            z-index: 5000;
+            gap: 8px;
+        }
+
+        .taskbar-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .taskbar-left::-webkit-scrollbar { display: none; }
+
+        .start-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+            padding: 4px 10px;
+            flex-shrink: 0;
+        }
+
+        .start-btn img {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .taskbar-tab {
+            font-weight: normal;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            white-space: nowrap;
+        }
+
+        .taskbar-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .tray-box {
+            border-top: 1px solid var(--win-dark);
+            border-left: 1px solid var(--win-dark);
+            border-right: 1px solid var(--win-light);
+            border-bottom: 1px solid var(--win-light);
+            padding: 4px 8px;
+            font-family: var(--font-mono);
+            font-size: 0.76rem;
+            background: #b8b8b8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .crt-toggle {
+            background: none;
+            border: none;
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            font-weight: bold;
+            color: var(--win-navy);
+            cursor: pointer;
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 820px) {
+            .brief-grid, .dual-grid, .dev-grid {
+                grid-template-columns: 1fr;
+            }
+            .desktop-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .top-nav {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .taskbar-tab { display: none; }
+        }
+
+        @media (max-width: 520px) {
+            .win-body { padding: 12px; }
+            .game-title { font-size: 1.5rem; }
+            .cam-buttons, .folder-tabs {
+                grid-template-columns: 1fr;
+            }
+            /* Prevent iOS Safari zoom on input focus */
+            #termInput { font-size: 16px !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="crt-overlay"></div>
+
+    <!-- TOP DESKTOP HEADER -->
+    <header class="desktop-header">
+        <div class="apd-brand">
+            <img src="arboria logo.jpg" alt="Arboria Police Department Badge" onerror="this.onerror=null; this.src='logo.jpg';">
+            <div>
+                <h1>ARBORIA POLICE DEPARTMENT</h1>
+                <span>INTERNAL INTRANET TERMINAL // EST. 1888 // OS v4.0</span>
+            </div>
+        </div>
+        <nav class="top-nav">
+            <a href="#case" class="win-btn">Case File</a>
+            <a href="#cctv" class="win-btn">Surveillance</a>
+            <a href="#wiki" class="win-btn">Personnel DB</a>
+            <a href="#dev" class="win-btn">Development</a>
+        </nav>
+    </header>
+
+    <main class="workspace">
+
+        <!-- WINDOW 1: CASE BRIEF & DOWNLOADS -->
+        <section id="case" class="win-window active-win" onclick="focusWindow(this)">
+            <div class="win-titlebar">
+                <div class="win-titlebar-left">
+                    <img src="arboria logo.jpg" alt="APD" onerror="this.style.display='none'">
+                    <span>CASE_FILE_19ABB.DOC — [READ ONLY]</span>
+                </div>
+                <div class="win-controls">
+                    <div class="win-ctrl-btn">_</div>
+                    <div class="win-ctrl-btn">□</div>
+                    <div class="win-ctrl-btn">X</div>
+                </div>
+            </div>
+            <div class="win-body">
+                <div class="brief-grid">
+                    <div class="win-inset">
+                        <span class="classified-tag">CONFIDENTIAL // LEVEL 3 CLEARANCE</span>
+                        <h2 class="game-title">THE ABANDONED ONES</h2>
+                        <p style="font-size: 0.9rem; line-height: 1.6; margin-bottom: 12px; color: #222;">
+                            For 19 years, an isolated property on the outskirts of Arboria County has remained unsold and undemolished. Following repeated civilian reports, Officer <strong>Jack Johnson</strong> is assigned to a solitary, off-the-record inspection of the premises.
+                        </p>
+                        <p style="font-size: 0.9rem; line-height: 1.6; margin-bottom: 18px; color: #222;">
+                            At 23:40 HRS, Officer Johnson reported a concealed subterranean access point before radio contact was lost. Further operational details remain <span class="redacted">STRICTLY REDACTED</span> by order of the Chief of Police.
+                        </p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <a href="https://stbnjr.itch.io/tao" target="_blank" rel="noopener" class="win-btn win-btn-primary">
+                                💾 Download on Itch.io
+                            </a>
+                            <a href="https://gamejolt.com/games/TAO/1037965" target="_blank" rel="noopener" class="win-btn">
+                                ⚡ Follow on Game Jolt
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="win-inset" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <table class="meta-table">
+                            <tr><td>CASE ID:</td><td>#19-ABB-TAO</td></tr>
+                            <tr><td>JURISDICTION:</td><td>Arboria County</td></tr>
+                            <tr><td>ASSIGNED:</td><td>Ofc. J. Johnson</td></tr>
+                            <tr><td>SUPERVISOR:</td><td>Chief J. Robbinson</td></tr>
+                            <tr><td>RADIO LINK:</td><td style="color: var(--alert-red); font-weight: bold;">SIGNAL LOST</td></tr>
+                            <tr><td>BUILD VER:</td><td>Pre-Alpha V3</td></tr>
+                            <tr><td>PLATFORMS:</td><td>Windows / Android</td></tr>
+                        </table>
+                        <div style="font-family: var(--font-mono); font-size: 0.72rem; color: #555; border-top: 1px solid var(--win-dark); padding-top: 8px; margin-top: 10px;">
+                            PROPERTY OF ARBORIA P.D. UNAUTHORIZED DISTRIBUTION IS PROHIBITED.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DUAL ROW: CCTV (3 CAMERAS) & WIKI (PERSONNEL DB) -->
+        <div class="dual-grid">
+
+            <!-- WINDOW 2: CCTV MONITOR -->
+            <section id="cctv" class="win-window" onclick="focusWindow(this)">
+                <div class="win-titlebar">
+                    <div class="win-titlebar-left">
+                        <span>📹 CCTV_MONITOR.EXE — SUBLEVEL FEED</span>
+                    </div>
+                    <div class="win-controls">
+                        <div class="win-ctrl-btn">_</div>
+                        <div class="win-ctrl-btn">□</div>
+                        <div class="win-ctrl-btn">X</div>
+                    </div>
+                </div>
+                <div class="win-body">
+                    <div class="cctv-screen" onclick="openModal(document.getElementById('camFeed').src, document.getElementById('camLabel').textContent)">
+                        <img id="camFeed" src="office.jpg" alt="Security Feed" onerror="this.onerror=null; this.src='arboria logo.jpg';">
+                        <div class="cctv-overlay">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #ff3b3b; font-weight: bold;">● REC // <span id="camLabel">CAM 01: OFFICE</span></span>
+                                <span id="cctvTime">03:00:00 AM</span>
+                            </div>
+                            <div id="camStatus" style="background: rgba(0,0,0,0.68); padding: 3px 8px; align-self: flex-start;">
+                                FEED STATUS: PRIMARY CONTROL STATION
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cam-buttons">
+                        <button class="win-btn active" onclick="selectCamera('CAM 01: OFFICE', 'Primary control station', 'office.jpg', this)">
+                            CAM 01: OFFICE
+                        </button>
+                        <button class="win-btn" onclick="selectCamera('CAM 02: DOOR', 'Sublevel access point', 'door.jpg', this)">
+                            CAM 02: DOOR
+                        </button>
+                        <button class="win-btn" onclick="selectCamera('CAM 03: MONITOR', 'Surveillance terminal', 'monitor.jpg', this)">
+                            CAM 03: MONITOR
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- WINDOW 3: WIKI / PERSONNEL FILES -->
+            <section id="wiki" class="win-window" onclick="focusWindow(this)">
+                <div class="win-titlebar">
+                    <div class="win-titlebar-left">
+                        <span>📁 PERSONNEL_DB.EXE — WIKI RECORDS</span>
+                    </div>
+                    <div class="win-controls">
+                        <div class="win-ctrl-btn">_</div>
+                        <div class="win-ctrl-btn">□</div>
+                        <div class="win-ctrl-btn">X</div>
+                    </div>
+                </div>
+                <div class="win-body">
+                    <div class="folder-tabs">
+                        <button class="win-btn active" onclick="showRecord('johnson', this)">J. Johnson</button>
+                        <button class="win-btn" onclick="showRecord('robbinson', this)">J. Robbinson</button>
+                        <button class="win-btn" onclick="showRecord('subjects', this)">Anomalies</button>
+                    </div>
+
+                    <!-- Record 1: Jack Johnson -->
+                    <div id="rec-johnson" class="win-inset record-pane">
+                        <span class="classified-tag" style="background: var(--win-navy);">APD OFFICER FILE</span>
+                        <ul class="bio-list">
+                            <li><strong>NAME:</strong> Jack Johnson</li>
+                            <li><strong>DOB:</strong> June 20, 1968 (Arboria)</li>
+                            <li><strong>PARENTS:</strong> Maria Lopez & Hal Johnson</li>
+                            <li><strong>EDUCATION:</strong> B.S. Robotics Engineering</li>
+                        </ul>
+                        <p style="font-size: 0.85rem; line-height: 1.5; color: #222;">
+                            Lived in Arboria until age 6. Following his father's death and severe childhood amnesia, relocated to Tijuana, Mexico with his mother until age 25. Graduated as a Robotics Engineer before returning to join the Arboria Police Department.
+                        </p>
+                    </div>
+
+                    <!-- Record 2: Jack Robbinson -->
+                    <div id="rec-robbinson" class="win-inset record-pane" style="display: none;">
+                        <span class="classified-tag" style="background: var(--win-navy);">COMMAND STAFF FILE</span>
+                        <ul class="bio-list">
+                            <li><strong>NAME:</strong> Jack Robbinson</li>
+                            <li><strong>DOB:</strong> February 2, 1941 (San Diego)</li>
+                            <li><strong>RANK:</strong> Chief of Police (Arboria County)</li>
+                            <li><strong>SERVICE:</strong> Military & Combat Veteran</li>
+                        </ul>
+                        <p style="font-size: 0.85rem; line-height: 1.5; color: #222;">
+                            Relocated from San Diego to Arboria in 1960 alongside his brother, Hal Johnson. Served in the military and fought in the war prior to ascending to Chief of Police of Arboria County.
+                        </p>
+                    </div>
+
+                    <!-- Record 3: Subjects -->
+                    <div id="rec-subjects" class="win-inset record-pane" style="display: none;">
+                        <span class="classified-tag">EVIDENCE // RESTRICTED</span>
+                        <ul class="bio-list">
+                            <li><strong>DESIGNATION:</strong> "The Abandoned Ones"</li>
+                            <li><strong>LOCATION:</strong> Subterranean Sector</li>
+                            <li><strong>STATUS:</strong> <span class="redacted">CLASSIFIED</span></li>
+                        </ul>
+                        <p style="font-size: 0.85rem; line-height: 1.5; color: #222;">
+                            Automated animatronic units discovered inside the sealed underground chambers beneath the outskirts residence. Further technical specifications remain sealed by department order.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- WINDOW 4: DEVELOPMENT SHOWCASE -->
+        <section id="dev" class="win-window" onclick="focusWindow(this)">
+            <div class="win-titlebar">
+                <div class="win-titlebar-left">
+                    <span>🛠️ DEV_ARCHIVE.EXE — PRODUCTION LOGS</span>
+                </div>
+                <div class="win-controls">
+                    <div class="win-ctrl-btn">_</div>
+                    <div class="win-ctrl-btn">□</div>
+                    <div class="win-ctrl-btn">X</div>
+                </div>
+            </div>
+            <div class="win-body">
+                <div class="dev-grid">
+                    <div>
+                        <div class="dev-slot" onclick="openModal(this.querySelector('img').src, '01 // CORE ENGINE & AI LOGIC')">
+                            <img src="dev1.jpg" alt="Engine & Systems" onerror="this.onerror=null; this.src='arboria logo.jpg';">
+                        </div>
+                        <div class="dev-caption">01 // CORE ENGINE & AI LOGIC</div>
+                    </div>
+                    <div>
+                        <div class="dev-slot" onclick="openModal(this.querySelector('img').src, '02 // 3D ENVIRONMENT & MODELS')">
+                            <img src="dev2.jpg" alt="3D Environments" onerror="this.onerror=null; this.src='arboria logo.jpg';">
+                        </div>
+                        <div class="dev-caption">02 // 3D ENVIRONMENT & MODELS</div>
+                    </div>
+                    <div>
+                        <div class="dev-slot" onclick="openModal(this.querySelector('img').src, '03 // VHS SHADERS & SOUND DESIGN')">
+                            <img src="dev3.jpg" alt="UI & Atmosphere" onerror="this.onerror=null; this.src='arboria logo.jpg';">
+                        </div>
+                        <div class="dev-caption">03 // VHS SHADERS & SOUND DESIGN</div>
+                    </div>
+                </div>
+                <div style="margin-top: 14px; font-family: var(--font-mono); font-size: 0.78rem; color: #333; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                    <span>DEVELOPED BY: <strong>StbnJr</strong></span>
+                    <span>ORIGINAL SOUNDTRACK: <strong>Yvi</strong></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- WINDOW 5: ENCRYPTED QUERY TERMINAL (NO CODES YET) -->
+        <section id="terminal" class="win-window" onclick="focusWindow(this)">
+            <div class="win-titlebar">
+                <div class="win-titlebar-left">
+                    <span>⌨️ APD_TERMINAL.EXE — DIRECTIVE PROMPT</span>
+                </div>
+                <div class="win-controls">
+                    <div class="win-ctrl-btn">_</div>
+                    <div class="win-ctrl-btn">□</div>
+                    <div class="win-ctrl-btn">X</div>
+                </div>
+            </div>
+            <div class="win-body">
+                <div class="win-inset-dark">
+                    <div id="termLog" style="min-height: 68px; max-height: 140px; overflow-y: auto; font-size: 0.82rem; margin-bottom: 10px; line-height: 1.5;">
+                        ARBORIA P.D. CENTRAL MAINFRAME [Version 4.00.95]<br>
+                        (C) Copyright Arboria County Police Dept. All rights reserved.<br>
+                        STATUS: DATABASE ENCRYPTED. CLEARANCE CODES PENDING DEPLOYMENT.
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; border-top: 1px solid #223042; padding-top: 8px;">
+                        <span style="color: var(--crt-green); font-size: 0.82rem; flex-shrink: 0;">C:\APD&gt;</span>
+                        <input type="text" id="termInput" placeholder="Enter authorization code..." autocomplete="off" style="flex: 1; background: transparent; border: none; color: #fff; font-family: var(--font-mono); font-size: 0.86rem; outline: none;">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL IMAGE VIEWER -->
+    <div class="modal-backdrop" id="imgModal" onclick="closeModal()">
+        <div class="win-window active-win modal-window" onclick="event.stopPropagation()">
+            <div class="win-titlebar">
+                <div class="win-titlebar-left">
+                    <span id="modalTitle">IMAGE_VIEWER.EXE</span>
+                </div>
+                <div class="win-controls">
+                    <div class="win-ctrl-btn" style="cursor: pointer;" onclick="closeModal()">X</div>
+                </div>
+            </div>
+            <div class="win-body">
+                <div class="win-inset modal-img-wrap">
+                    <img id="modalImg" src="" alt="Preview">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WINDOWS 95 TASKBAR -->
+    <footer class="taskbar">
+        <div class="taskbar-left">
+            <a href="#" class="win-btn start-btn">
+                <img src="arboria logo.jpg" alt="APD" onerror="this.style.display='none'">
+                <span>Start</span>
+            </a>
+            <a href="#case" class="win-btn taskbar-tab">📄 CASE_19ABB.DOC</a>
+            <a href="#cctv" class="win-btn taskbar-tab">📹 CCTV_MONITOR.EXE</a>
+            <a href="#wiki" class="win-btn taskbar-tab">📁 PERSONNEL_DB.EXE</a>
+            <a href="#dev" class="win-btn taskbar-tab">🛠️ DEV_ARCHIVE.EXE</a>
+        </div>
+        <div class="taskbar-right">
+            <div class="tray-box">
+                <button class="crt-toggle" id="crtBtn" onclick="toggleCRT()">CRT: ON</button>
+                <span>|</span>
+                <span id="taskbarClock">12:00 AM</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 1. Window Focus Highlight (Windows 95 Active Titlebar behavior)
+        function focusWindow(winEl) {
+            document.querySelectorAll('main .win-window').forEach(w => w.classList.remove('active-win'));
+            winEl.classList.add('active-win');
+        }
+
+        // 2. Camera Switcher (Office, Door, Monitor)
+        function selectCamera(label, statusText, imgFile, btnElement) {
+            document.querySelectorAll('.cam-buttons .win-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            const feed = document.getElementById('camFeed');
+            feed.style.opacity = 0.15;
+
+            setTimeout(() => {
+                document.getElementById('camLabel').textContent = label;
+                document.getElementById('camStatus').textContent = 'FEED STATUS: ' + statusText.toUpperCase();
+                feed.onerror = function() {
+                    this.onerror = null;
+                    this.src = 'arboria logo.jpg';
+                };
+                feed.src = imgFile;
+                feed.style.opacity = 1;
+            }, 120);
+        }
+
+        // 3. Personnel Wiki Tabs
+        function showRecord(recordId, btnElement) {
+            document.querySelectorAll('.folder-tabs .win-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            document.querySelectorAll('.record-pane').forEach(pane => {
+                pane.style.display = 'none';
+            });
+            document.getElementById('rec-' + recordId).style.display = 'block';
+        }
+
+        // 4. Image Modal Preview
+        function openModal(imgSrc, titleText) {
+            document.getElementById('modalImg').src = imgSrc;
+            document.getElementById('modalTitle').textContent = 'IMAGE_VIEWER.EXE — ' + titleText;
+            document.getElementById('imgModal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('imgModal').classList.remove('open');
+        }
+
+        // 5. CRT Filter Toggle in System Tray
+        function toggleCRT() {
+            document.body.classList.toggle('crt-off');
+            const isOff = document.body.classList.contains('crt-off');
+            document.getElementById('crtBtn').textContent = isOff ? 'CRT: OFF' : 'CRT: ON';
+        }
+
+        // 6. Locked Terminal (No active codes yet)
+        const termInput = document.getElementById('termInput');
+        const termLog = document.getElementById('termLog');
+
+        termInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && termInput.value.trim() !== '') {
+                const rawVal = termInput.value.trim().toUpperCase().replace(/[<>&"']/g, '');
+                termLog.innerHTML += `<br>&gt; ${rawVal}<br><span style="color:#ff5555;">[ACCESS DENIED]: Clearance code module offline. Await future system update.</span>`;
+                termLog.scrollTop = termLog.scrollHeight;
+                termInput.value = '';
+            }
+        });
+
+        // 7. Real-time Clock
+        function updateClocks() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const secStr = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('taskbarClock').textContent = timeStr;
+            document.getElementById('cctvTime').textContent = `03:${String(now.getMinutes()).padStart(2, '0')}:${secStr} AM`;
+        }
+        setInterval(updateClocks, 1000);
+        updateClocks();
+    </script>
+</body>
+</html>
